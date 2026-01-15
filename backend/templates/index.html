@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Stranger Things – Scene 1</title>
+</head>
+<body>
+
+  <h1>Scene 1</h1>
+
+  <p id="story">
+    A chilly night in 1986. Christmas lights glow faintly as you ride your bike home...
+  </p>
+
+  <button onclick="sendChoice('mike')">Run to Mike's house</button>
+  <button onclick="sendChoice('road')">Take the main road</button>
+  <button onclick="sendChoice('woods')">Run into the woods</button>
+
+  <script>
+    function sendChoice(choice) {
+      fetch("/scene/1", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ choice: choice })
+      })
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById("story").innerText = data.result;
+      });
+    }
+  </script>
+
+</body>
+</html>
