@@ -1,3 +1,28 @@
+def opening_scene():
+    return """
+It’s a cold December night in 1986.
+
+Christmas lights glow weakly across Hawkins, half-hearted and tired, as a lone boy pedals his bike through empty streets. The decorations feel forced—plastic cheer stapled onto a town that doesn’t quite believe in it anymore.
+
+As he rides, something flickers.
+
+One house. Then another.
+
+The lights stutter unnaturally, buzzing like a warning. He slows down, heart thumping, telling himself it’s nothing. Old wiring. Bad luck.
+
+Then—
+
+Something appears in the road.
+
+The bike skids. Metal screams. He crashes hard onto the asphalt, breath knocked from his lungs.
+
+The air feels wrong now. Heavy. Watching.
+
+Behind him, the lights go out.
+
+He isn’t alone anymore.
+"""
+
 def scene_one(choice):
     if choice == "mike":
         return (
