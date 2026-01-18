@@ -7,13 +7,10 @@
 
 <body>
 
-  <!-- =========================
-       INTRO MENU SCREEN
-       ========================= -->
+  <!-- INTRO MENU -->
   <div id="intro-screen" class="screen active">
     <div class="intro-content">
       <h1 class="title">Stranger Things</h1>
-
       <div class="menu">
         <button onclick="newGame()">New Game</button>
         <button id="continue-btn" disabled onclick="continueGame()">Continue</button>
@@ -23,197 +20,269 @@
     </div>
   </div>
 
-  <!-- =========================
-       GAME SCREEN
-       ========================= -->
+  <!-- GAME SCREEN -->
   <div class="game-container screen">
-
     <h1 class="title">Stranger Things</h1>
-
     <div id="story-box">
       <p id="story"></p>
     </div>
-
     <div class="choices">
       <button onclick="sendChoice('mike')">Run to Mike's house</button>
       <button onclick="sendChoice('road')">Take the main road</button>
       <button onclick="sendChoice('woods')">Run into the woods</button>
     </div>
-
   </div>
 
-  <!-- =========================
-       CREDITS SCREEN
-       ========================= -->
+  <!-- CREDITS -->
   <div id="credits-screen" class="screen">
     <div class="intro-content">
       <h1 class="title">Credits</h1>
       <p>
         An interactive narrative experience.<br><br>
         Created by Shabaz & Team.<br>
-        Inspired by 80s sci-fi horror aesthetics.<br><br>
-        All visuals and audio are original or AI-generated.
+        Inspired by 80s sci-fi horror aesthetics.
       </p>
       <button onclick="backToMenu()">Back</button>
     </div>
   </div>
 
+  <!-- SETTINGS -->
+  <div id="settings-screen" class="screen">
+    <div class="intro-content">
+      <h1 class="title">Settings</h1>
 
-<!-- =========================
-     SETTINGS SCREEN
-     ========================= -->
-<div id="settings-screen" class="screen">
-  <div class="intro-content">
-    <h1 class="title">Settings</h1>
+      <div class="settings-group">
+        <label>Master Volume: <span id="volume-value">100</span></label>
+        <input type="range" id="volume-slider" min="1" max="100" value="100">
+      </div>
 
-    <div class="settings-group">
-      <label>Master Volume: <span id="volume-value">100</span></label>
-      <input type="range" id="volume-slider" min="1" max="100" value="100">
+      <div class="settings-group">
+        <label><input type="checkbox" id="music-toggle" checked> Music On</label>
+      </div>
+
+      <div class="settings-group">
+        <label><input type="checkbox" id="fullscreen-toggle"> Fullscreen</label>
+      </div>
+
+      <div class="settings-group">
+        <label>Text Speed</label>
+        <select id="text-speed">
+          <option value="slow">Slow</option>
+          <option value="normal" selected>Normal</option>
+          <option value="fast">Fast</option>
+        </select>
+      </div>
+
+      <div class="settings-group">
+        <label><input type="checkbox" id="reduce-motion"> Reduce Motion</label>
+      </div>
+
+      <div class="settings-actions">
+        <button onclick="resetGame()">Reset Progress</button>
+        <button onclick="backToMenu()">Back</button>
+      </div>
     </div>
+  </div>
 
-    <div class="settings-group">
-      <label>
-        <input type="checkbox" id="music-toggle" checked>
-        Music On
-      </label>
-    </div>
+<script>
+/* ================= GLOBAL STATE ================= */
 
-    <div class="settings-group">
-      <label>Text Speed</label>
-      <select id="text-speed">
-        <option value="slow">Slow</option>
-        <option value="normal" selected>Normal</option>
-        <option value="fast">Fast</option>
-      </select>
-    </div>
+let gameState = { scene: 1, choices: [] };
 
-    <div class="settings-group">
-      <label>
-        <input type="checkbox" id="reduce-motion">
-        Reduce Motion
-      </label>
-    <div class="settings-actions">
-  <button onclick="resetGame()">Reset Progress</button>
-  <button onclick="backToMenu()">Back</button>
-</div>
-
-</div>
-
-
-
-  <!-- =========================
-       SCRIPT
-       ========================= -->
-  <script>
-    let gameState = {
-    scene: 1,
-    choices: []
-  };
-
-  let settings = {
+let settings = {
   volume: 100,
   musicOn: true,
   textSpeed: "normal",
   reduceMotion: false
 };
 
+/* ================= AUDIO ================= */
 
-  console.log("Game State:", gameState);
-    /* -------------------------
-       INTRO MENU LOGIC
-       ------------------------- */
+let audioCtx = null;
+let clickBuffer = null;
+let menuMusicBuffer = null;
+let menuMusicSource = null;
+let thunderBuffer = null;
+let thunderSource = null;
 
-    function newGame() {
-  gameState = {
-    scene: 1,
-    choices: []
-  };
+function initAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-  localStorage.removeItem("gameState");
-  console.log("New Game Started:", gameState);
+  if (!clickBuffer)
+    fetch("/static/sounds/click.mp3").then(r=>r.arrayBuffer())
+      .then(b=>audioCtx.decodeAudioData(b)).then(buf=>clickBuffer=buf);
 
-  hideAllScreens();
-  document.querySelector(".game-container").classList.add("active");
+  if (!menuMusicBuffer)
+    fetch("/static/sounds/menu.mp3").then(r=>r.arrayBuffer())
+      .then(b=>audioCtx.decodeAudioData(b)).then(buf=>menuMusicBuffer=buf);
+
+  if (!thunderBuffer)
+    fetch("/static/sounds/thunder.mp3").then(r=>r.arrayBuffer())
+      .then(b=>audioCtx.decodeAudioData(b)).then(buf=>thunderBuffer=buf);
 }
 
+function playClickSound() {
+  if (!settings.musicOn || !clickBuffer || !audioCtx) return;
+  const src = audioCtx.createBufferSource();
+  const gain = audioCtx.createGain();
+  gain.gain.value = settings.volume / 100;
+  src.buffer = clickBuffer;
+  src.connect(gain); gain.connect(audioCtx.destination);
+  src.start();
+}
 
-function continueGame() {
-  const savedState = localStorage.getItem("gameState");
+function playMenuMusic() {
+  if (!settings.musicOn || !menuMusicBuffer || menuMusicSource || !audioCtx) return;
+  const src = audioCtx.createBufferSource();
+  const gain = audioCtx.createGain();
+  gain.gain.value = (settings.volume / 100) * 0.35;
+  src.buffer = menuMusicBuffer;
+  src.loop = true;
+  src.connect(gain); gain.connect(audioCtx.destination);
+  src.start();
+  menuMusicSource = src;
+}
 
-  if (!savedState) {
+function stopMenuMusic() {
+  if (menuMusicSource) {
+    menuMusicSource.stop();
+    menuMusicSource = null;
+  }
+}
+
+function playThunderAmbience() {
+  if (!settings.musicOn || !thunderBuffer || thunderSource || !audioCtx) return;
+  const src = audioCtx.createBufferSource();
+  const gain = audioCtx.createGain();
+  gain.gain.value = (settings.volume / 100) * 0.25;
+  src.buffer = thunderBuffer;
+  src.loop = true;
+  src.connect(gain); gain.connect(audioCtx.destination);
+  src.start();
+  thunderSource = src;
+}
+
+function stopThunderAmbience() {
+  if (thunderSource) {
+    thunderSource.stop();
+    thunderSource = null;
+  }
+}
+
+/* unlock audio */
+document.addEventListener("click", function unlock() {
+  initAudio();
+  playMenuMusic();
+  document.removeEventListener("click", unlock);
+});
+
+document.addEventListener("click", e => {
+  if (e.target.tagName === "BUTTON") playClickSound();
+});
+
+/* ================= TYPEWRITER ================= */
+
+function getCharDelay(c) {
+  let base = settings.textSpeed === "slow" ? 60 :
+             settings.textSpeed === "fast" ? 25 : 40;
+  if (".!?".includes(c)) return base + 240;
+  if (",;".includes(c)) return base + 120;
+  if (c === "\n") return base + 320;
+  return base;
+}
+
+let isTyping = false;
+
+function typeWriterText(el, text) {
+  if (isTyping) return;
+  isTyping = true;
+  el.innerText = "";
+
+  if (settings.reduceMotion) {
+    el.innerText = text;
+    isTyping = false;
     return;
   }
 
-  gameState = JSON.parse(savedState);
-  console.log("Continuing Game State:", gameState);
+  let i = 0;
+  function next() {
+    if (i >= text.length) {
+      isTyping = false;
+      return;
+    }
+    el.innerText += text[i];
+    setTimeout(next, getCharDelay(text[i]));
+    i++;
+  }
+  next();
+}
 
+/* ================= SCREENS ================= */
+
+function hideAllScreens() {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+}
+
+function newGame() {
+  stopMenuMusic();
+  playThunderAmbience();
+  gameState = { scene: 1, choices: [] };
+  localStorage.removeItem("gameState");
   hideAllScreens();
   document.querySelector(".game-container").classList.add("active");
+
+  fetch("/scene/1").then(r=>r.json()).then(d=>{
+    typeWriterText(document.getElementById("story"), d.result);
+  });
+}
+
+function continueGame() {
+  stopMenuMusic();
+  stopThunderAmbience();
+  const s = localStorage.getItem("gameState");
+  if (!s) return;
+  gameState = JSON.parse(s);
+  hideAllScreens();
+  document.querySelector(".game-container").classList.add("active");
+
+  fetch("/scene/1").then(r=>r.json()).then(d=>{
+    typeWriterText(document.getElementById("story"), d.result);
+  });
 }
 
 function openSettings() {
   hideAllScreens();
   document.getElementById("settings-screen").classList.add("active");
+  playMenuMusic();
 }
-
 
 function openCredits() {
   hideAllScreens();
   document.getElementById("credits-screen").classList.add("active");
+  playMenuMusic();
 }
 
 function backToMenu() {
   hideAllScreens();
   document.getElementById("intro-screen").classList.add("active");
-}
-
-function hideAllScreens() {
-  document.querySelectorAll(".screen").forEach(screen => {
-    screen.classList.remove("active");
-  });
+  playMenuMusic();
 }
 
 function resetGame() {
-  // Remove saved game data
   localStorage.removeItem("gameState");
-
-  console.log("Game progress reset");
-
-  // Disable Continue button again
-  const continueBtn = document.getElementById("continue-btn");
-  if (continueBtn) {
-    continueBtn.disabled = true;
-  }
-
-  // Go back to intro screen
-  hideAllScreens();
-  document.getElementById("intro-screen").classList.add("active");
+  document.getElementById("continue-btn").disabled = true;
+  backToMenu();
 }
 
+/* ================= SETTINGS ================= */
 
+window.onload = function () {
+  const s = localStorage.getItem("gameState");
+  if (s) document.getElementById("continue-btn").disabled = false;
 
-    /* -------------------------
-       LOAD INITIAL STORY
-       ------------------------- */
-
-    window.onload = function () {
-      const savedState = localStorage.getItem("gameState");
-      
-if (savedState) {
-  gameState = JSON.parse(savedState);
-  console.log("Loaded Game State:", gameState);
-}
-
-const continueBtn = document.getElementById("continue-btn");
-
-if (savedState && continueBtn) {
-  continueBtn.disabled = false;
-}
-
-const savedSettings = localStorage.getItem("settings");
-  if (savedSettings) {
-    settings = JSON.parse(savedSettings);
-  }
+  const saved = localStorage.getItem("settings");
+  if (saved) settings = JSON.parse(saved);
+  settings.volume = Number(settings.volume);
 
   document.getElementById("volume-slider").value = settings.volume;
   document.getElementById("volume-value").innerText = settings.volume;
@@ -221,66 +290,53 @@ const savedSettings = localStorage.getItem("settings");
   document.getElementById("text-speed").value = settings.textSpeed;
   document.getElementById("reduce-motion").checked = settings.reduceMotion;
 
+  playMenuMusic();
+};
 
-      fetch("/scene/1")
-        .then(response => response.json())
-        .then(data => {
-          document.getElementById("story").innerText = data.result;
-        });
-    };
-
-
-  document.getElementById("volume-slider").oninput = function () {
-  settings.volume = this.value;
-  document.getElementById("volume-value").innerText = this.value;
+document.getElementById("volume-slider").oninput = function () {
+  settings.volume = Number(this.value);
+  document.getElementById("volume-value").innerText = settings.volume;
   localStorage.setItem("settings", JSON.stringify(settings));
 };
+
 document.getElementById("music-toggle").onchange = function () {
   settings.musicOn = this.checked;
   localStorage.setItem("settings", JSON.stringify(settings));
-};
-document.getElementById("text-speed").onchange = function () {
-  settings.textSpeed = this.value;
-  localStorage.setItem("settings", JSON.stringify(settings));
-};
-document.getElementById("reduce-motion").onchange = function () {
-  settings.reduceMotion = this.checked;
-  localStorage.setItem("settings", JSON.stringify(settings));
+  this.checked ? playMenuMusic() : stopMenuMusic();
 };
 
+/* FULLSCREEN FIX */
+const fs = document.getElementById("fullscreen-toggle");
+fs.onchange = function () {
+  this.checked ? document.documentElement.requestFullscreen() : document.exitFullscreen();
+};
+document.addEventListener("fullscreenchange", () => {
+  fs.checked = !!document.fullscreenElement;
+});
 
-    /* -------------------------
-       GAME CHOICE HANDLER
-       ------------------------- */
+/* ================= GAME ================= */
 
-    function sendChoice(choice) {
-      gameState.choices.push(choice);
-      localStorage.setItem("gameState", JSON.stringify(gameState));
+function sendChoice(choice) {
+  gameState.choices.push(choice);
+  localStorage.setItem("gameState", JSON.stringify(gameState));
 
-console.log("Updated Game State:", gameState);
+  const story = document.getElementById("story");
+  story.style.opacity = 0;
 
-      const story = document.getElementById("story");
-
-      story.style.opacity = 0;
-
-      fetch("/scene/1", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ choice: choice })
-      })
-      .then(response => response.json())
-      .then(data => {
-        setTimeout(() => {
-          story.innerText = data.result;
-          story.style.opacity = 1;
-
-          document.querySelectorAll(".choices button").forEach(
-            btn => btn.disabled = true
-          );
-        }, 400);
-      });
-    }
-  </script>
+  fetch("/scene/1", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ choice })
+  })
+  .then(r=>r.json())
+  .then(d=>{
+    setTimeout(()=>{
+      typeWriterText(story, d.result);
+      story.style.opacity = 1;
+    }, 400);
+  });
+}
+</script>
 
 </body>
 </html>

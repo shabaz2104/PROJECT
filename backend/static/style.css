@@ -1,0 +1,213 @@
+@font-face {
+  font-family: 'Uncial Antiqua';
+  src: url('/static/fonts/UncialAntiqua-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Libre Baskerville';
+  src: url('/static/fonts/LibreBaskerville-Regular.ttf') format('truetype');
+}
+
+/* =========================
+   GLOBAL BASE (NO WHITE EVER)
+   ========================= */
+
+html, body {
+  background-color: #000;
+  color: #f5f5f5;
+  font-family: 'Libre Baskerville', serif;
+  min-height: 100vh;
+  margin: 0;
+  overflow-x: hidden;
+}
+
+p, button, select, label {
+  font-family: 'Libre Baskerville', serif;
+}
+
+/* =========================
+   SCREEN SYSTEM
+   ========================= */
+
+.screen {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at center, #050505, #000 70%);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.6s ease;
+}
+
+.screen.active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+/* =========================
+   INTRO / SETTINGS / CREDITS
+   ========================= */
+
+#intro-screen,
+#settings-screen,
+#credits-screen {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+}
+
+/* =========================
+   CONTENT CONTAINER
+   ========================= */
+
+.intro-content {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: introFade 1s ease;
+}
+
+/* =========================
+   TITLES
+   ========================= */
+
+.title {
+  font-family: 'Uncial Antiqua', serif;
+  color: #e50914;
+  letter-spacing: 6px;
+  font-size: 48px;
+  margin-bottom: 40px;
+  text-transform: uppercase;
+  text-shadow: 0 0 18px rgba(229, 9, 20, 0.35);
+}
+
+/* =========================
+   MENU
+   ========================= */
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.menu button {
+  width: 240px;
+  padding: 14px;
+  background: transparent;
+  color: #e50914;
+  border: 1px solid #e50914;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.menu button:hover {
+  background: #e50914;
+  color: #000;
+}
+
+/* =========================
+   GAME SCREEN
+   ========================= */
+
+.game-container {
+  position: relative;
+  min-height: 100vh;
+  padding: 60px 20px 80px;
+  max-width: 650px;
+  margin: auto;
+  overflow-y: auto;
+}
+
+#story-box {
+  background: rgba(0, 0, 0, 0.65);
+  border: 1px solid #e50914;
+  padding: 30px;
+  margin-bottom: 40px;
+}
+
+#story {
+  white-space: pre-wrap;      /* ← THIS IS THE KEY FIX */
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+
+  line-height: 1.7;
+  font-size: 15px;
+  text-align: left;
+  transition: opacity 0.4s ease;
+}
+
+
+/* =========================
+   CHOICES
+   ========================= */
+
+.choices {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.choices button {
+  background: transparent;
+  color: #e50914;
+  border: 1px solid #e50914;
+  padding: 12px;
+  letter-spacing: 2px;
+  cursor: pointer;
+}
+
+.choices button:hover {
+  background: #e50914;
+  color: #000;
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* =========================
+   SETTINGS SCREEN
+   ========================= */
+
+.settings-group {
+  width: 260px;
+  margin-bottom: 22px;
+  text-align: left;
+}
+
+.settings-group label {
+  margin-bottom: 6px;
+  display: block;
+}
+
+.settings-group input[type="range"],
+.settings-group select {
+  width: 100%;
+  background: #000;
+  color: #fff;
+  border: 1px solid #e50914;
+}
+
+.settings-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 30px;
+}
+
+/* =========================
+   ANIMATIONS
+   ========================= */
+
+@keyframes introFade {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+
