@@ -31,6 +31,10 @@
       <button onclick="sendChoice('road')">Take the main road</button>
       <button onclick="sendChoice('woods')">Run into the woods</button>
     </div>
+     <!-- ✅ RETURN TO MENU -->
+  <div style="margin-top: 40px; text-align: center;">
+    <button onclick="exitToMenu()">Return to Menu</button>
+  </div>
   </div>
 
   <!-- CREDITS -->
@@ -235,6 +239,34 @@ function newGame() {
     typeWriterText(document.getElementById("story"), d.result);
   });
 }
+
+function exitToMenu() {
+  // Stop story ambience
+  stopThunderAmbience();
+
+  // Stop any typing immediately
+  isTyping = false;
+
+  // Clear story text cleanly
+  const story = document.getElementById("story");
+  if (story) {
+    story.innerText = "";
+    story.style.opacity = 1;
+  }
+
+  // Re-enable choice buttons for next run
+  document.querySelectorAll(".choices button").forEach(btn => {
+    btn.disabled = false;
+  });
+
+  // Switch screens
+  hideAllScreens();
+  document.getElementById("intro-screen").classList.add("active");
+
+  // Resume menu music
+  playMenuMusic();
+}
+
 
 function continueGame() {
   stopMenuMusic();

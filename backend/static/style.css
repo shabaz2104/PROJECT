@@ -105,6 +105,20 @@ p, button, select, label {
   transition: all 0.25s ease;
 }
 
+/* =========================
+   RETURN TO MENU BUTTON
+   ========================= */
+
+.game-container > div:last-child button {
+  margin-top: 20px;
+  opacity: 0.8;
+}
+
+.game-container > div:last-child button:hover {
+  opacity: 1;
+}
+
+
 .menu button:hover {
   background: #e50914;
   color: #000;
