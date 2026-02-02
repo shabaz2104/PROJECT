@@ -25,6 +25,11 @@ p, button, select, label {
   font-family: 'Libre Baskerville', serif;
 }
 
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 /* =========================
    SCREEN SYSTEM
    ========================= */
@@ -105,84 +110,9 @@ p, button, select, label {
   transition: all 0.25s ease;
 }
 
-/* =========================
-   RETURN TO MENU BUTTON
-   ========================= */
-
-.game-container > div:last-child button {
-  margin-top: 20px;
-  opacity: 0.8;
-}
-
-.game-container > div:last-child button:hover {
-  opacity: 1;
-}
-
-
 .menu button:hover {
   background: #e50914;
   color: #000;
-}
-
-/* =========================
-   GAME SCREEN
-   ========================= */
-
-.game-container {
-  position: relative;
-  min-height: 100vh;
-  padding: 60px 20px 80px;
-  max-width: 650px;
-  margin: auto;
-  overflow-y: auto;
-}
-
-#story-box {
-  background: rgba(0, 0, 0, 0.65);
-  border: 1px solid #e50914;
-  padding: 30px;
-  margin-bottom: 40px;
-}
-
-#story {
-  white-space: pre-wrap;      /* ← THIS IS THE KEY FIX */
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-
-  line-height: 1.7;
-  font-size: 15px;
-  text-align: left;
-  transition: opacity 0.4s ease;
-}
-
-
-/* =========================
-   CHOICES
-   ========================= */
-
-.choices {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.choices button {
-  background: transparent;
-  color: #e50914;
-  border: 1px solid #e50914;
-  padding: 12px;
-  letter-spacing: 2px;
-  cursor: pointer;
-}
-
-.choices button:hover {
-  background: #e50914;
-  color: #000;
-}
-
-button:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
 }
 
 /* =========================
@@ -220,8 +150,12 @@ button:disabled {
    ========================= */
 
 @keyframes introFade {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
-
-

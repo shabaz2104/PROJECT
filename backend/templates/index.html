@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Stranger Things</title>
+  <title>The Gate</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
@@ -10,31 +10,14 @@
   <!-- INTRO MENU -->
   <div id="intro-screen" class="screen active">
     <div class="intro-content">
-      <h1 class="title">Stranger Things</h1>
+      <h1 class="title">The Gate</h1>
       <div class="menu">
-        <button onclick="newGame()">New Game</button>
-        <button id="continue-btn" disabled onclick="continueGame()">Continue</button>
+        <button onclick="comingSoon()">New Game</button>
+        <button id="continue-btn" disabled>Continue</button>
         <button onclick="openSettings()">Settings</button>
         <button onclick="openCredits()">Credits</button>
       </div>
     </div>
-  </div>
-
-  <!-- GAME SCREEN -->
-  <div class="game-container screen">
-    <h1 class="title">Stranger Things</h1>
-    <div id="story-box">
-      <p id="story"></p>
-    </div>
-    <div class="choices">
-      <button onclick="sendChoice('mike')">Run to Mike's house</button>
-      <button onclick="sendChoice('road')">Take the main road</button>
-      <button onclick="sendChoice('woods')">Run into the woods</button>
-    </div>
-     <!-- ✅ RETURN TO MENU -->
-  <div style="margin-top: 40px; text-align: center;">
-    <button onclick="exitToMenu()">Return to Menu</button>
-  </div>
   </div>
 
   <!-- CREDITS -->
@@ -42,9 +25,11 @@
     <div class="intro-content">
       <h1 class="title">Credits</h1>
       <p>
-        An interactive narrative experience.<br><br>
-        Created by Shabaz & Team.<br>
-        Inspired by 80s sci-fi horror aesthetics.
+        An original atmospheric horror game.<br><br>
+        Concept, Design & Development:<br>
+        Shabaz Shaikh<br><br>
+        Inspired by 80s small-town mystery and cosmic horror.<br>
+        All characters, worlds, and assets are original.
       </p>
       <button onclick="backToMenu()">Back</button>
     </div>
@@ -69,34 +54,22 @@
       </div>
 
       <div class="settings-group">
-        <label>Text Speed</label>
-        <select id="text-speed">
-          <option value="slow">Slow</option>
-          <option value="normal" selected>Normal</option>
-          <option value="fast">Fast</option>
-        </select>
-      </div>
-
-      <div class="settings-group">
         <label><input type="checkbox" id="reduce-motion"> Reduce Motion</label>
       </div>
 
       <div class="settings-actions">
-        <button onclick="resetGame()">Reset Progress</button>
+        <button onclick="resetSettings()">Reset Settings</button>
         <button onclick="backToMenu()">Back</button>
       </div>
     </div>
   </div>
 
 <script>
-/* ================= GLOBAL STATE ================= */
-
-let gameState = { scene: 1, choices: [] };
+/* ================= GLOBAL SETTINGS ================= */
 
 let settings = {
   volume: 100,
   musicOn: true,
-  textSpeed: "normal",
   reduceMotion: false
 };
 
@@ -106,23 +79,21 @@ let audioCtx = null;
 let clickBuffer = null;
 let menuMusicBuffer = null;
 let menuMusicSource = null;
-let thunderBuffer = null;
-let thunderSource = null;
 
 function initAudio() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
   if (!clickBuffer)
-    fetch("/static/sounds/click.mp3").then(r=>r.arrayBuffer())
-      .then(b=>audioCtx.decodeAudioData(b)).then(buf=>clickBuffer=buf);
+    fetch("/static/sounds/click.mp3")
+      .then(r => r.arrayBuffer())
+      .then(b => audioCtx.decodeAudioData(b))
+      .then(buf => clickBuffer = buf);
 
   if (!menuMusicBuffer)
-    fetch("/static/sounds/menu.mp3").then(r=>r.arrayBuffer())
-      .then(b=>audioCtx.decodeAudioData(b)).then(buf=>menuMusicBuffer=buf);
-
-  if (!thunderBuffer)
-    fetch("/static/sounds/thunder.mp3").then(r=>r.arrayBuffer())
-      .then(b=>audioCtx.decodeAudioData(b)).then(buf=>thunderBuffer=buf);
+    fetch("/static/sounds/menu.mp3")
+      .then(r => r.arrayBuffer())
+      .then(b => audioCtx.decodeAudioData(b))
+      .then(buf => menuMusicBuffer = buf);
 }
 
 function playClickSound() {
@@ -131,7 +102,8 @@ function playClickSound() {
   const gain = audioCtx.createGain();
   gain.gain.value = settings.volume / 100;
   src.buffer = clickBuffer;
-  src.connect(gain); gain.connect(audioCtx.destination);
+  src.connect(gain);
+  gain.connect(audioCtx.destination);
   src.start();
 }
 
@@ -142,7 +114,8 @@ function playMenuMusic() {
   gain.gain.value = (settings.volume / 100) * 0.35;
   src.buffer = menuMusicBuffer;
   src.loop = true;
-  src.connect(gain); gain.connect(audioCtx.destination);
+  src.connect(gain);
+  gain.connect(audioCtx.destination);
   src.start();
   menuMusicSource = src;
 }
@@ -154,172 +127,45 @@ function stopMenuMusic() {
   }
 }
 
-function playThunderAmbience() {
-  if (!settings.musicOn || !thunderBuffer || thunderSource || !audioCtx) return;
-  const src = audioCtx.createBufferSource();
-  const gain = audioCtx.createGain();
-  gain.gain.value = (settings.volume / 100) * 0.25;
-  src.buffer = thunderBuffer;
-  src.loop = true;
-  src.connect(gain); gain.connect(audioCtx.destination);
-  src.start();
-  thunderSource = src;
-}
-
-function stopThunderAmbience() {
-  if (thunderSource) {
-    thunderSource.stop();
-    thunderSource = null;
-  }
-}
-
-/* unlock audio */
-document.addEventListener("click", function unlock() {
-  initAudio();
-  playMenuMusic();
-  document.removeEventListener("click", unlock);
-});
-
-document.addEventListener("click", e => {
-  if (e.target.tagName === "BUTTON") playClickSound();
-});
-
-/* ================= TYPEWRITER ================= */
-
-function getCharDelay(c) {
-  let base = settings.textSpeed === "slow" ? 60 :
-             settings.textSpeed === "fast" ? 25 : 40;
-  if (".!?".includes(c)) return base + 240;
-  if (",;".includes(c)) return base + 120;
-  if (c === "\n") return base + 320;
-  return base;
-}
-
-let isTyping = false;
-
-function typeWriterText(el, text) {
-  if (isTyping) return;
-  isTyping = true;
-  el.innerText = "";
-
-  if (settings.reduceMotion) {
-    el.innerText = text;
-    isTyping = false;
-    return;
-  }
-
-  let i = 0;
-  function next() {
-    if (i >= text.length) {
-      isTyping = false;
-      return;
-    }
-    el.innerText += text[i];
-    setTimeout(next, getCharDelay(text[i]));
-    i++;
-  }
-  next();
-}
-
-/* ================= SCREENS ================= */
+/* ================= UI ================= */
 
 function hideAllScreens() {
   document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
 }
 
-function newGame() {
-  stopMenuMusic();
-  playThunderAmbience();
-  gameState = { scene: 1, choices: [] };
-  localStorage.removeItem("gameState");
-  hideAllScreens();
-  document.querySelector(".game-container").classList.add("active");
-
-  fetch("/scene/1").then(r=>r.json()).then(d=>{
-    typeWriterText(document.getElementById("story"), d.result);
-  });
-}
-
-function exitToMenu() {
-  // Stop story ambience
-  stopThunderAmbience();
-
-  // Stop any typing immediately
-  isTyping = false;
-
-  // Clear story text cleanly
-  const story = document.getElementById("story");
-  if (story) {
-    story.innerText = "";
-    story.style.opacity = 1;
-  }
-
-  // Re-enable choice buttons for next run
-  document.querySelectorAll(".choices button").forEach(btn => {
-    btn.disabled = false;
-  });
-
-  // Switch screens
-  hideAllScreens();
-  document.getElementById("intro-screen").classList.add("active");
-
-  // Resume menu music
-  playMenuMusic();
-}
-
-
-function continueGame() {
-  stopMenuMusic();
-  stopThunderAmbience();
-  const s = localStorage.getItem("gameState");
-  if (!s) return;
-  gameState = JSON.parse(s);
-  hideAllScreens();
-  document.querySelector(".game-container").classList.add("active");
-
-  fetch("/scene/1").then(r=>r.json()).then(d=>{
-    typeWriterText(document.getElementById("story"), d.result);
-  });
-}
-
 function openSettings() {
   hideAllScreens();
   document.getElementById("settings-screen").classList.add("active");
-  playMenuMusic();
 }
 
 function openCredits() {
   hideAllScreens();
   document.getElementById("credits-screen").classList.add("active");
-  playMenuMusic();
 }
 
 function backToMenu() {
   hideAllScreens();
   document.getElementById("intro-screen").classList.add("active");
-  playMenuMusic();
 }
 
-function resetGame() {
-  localStorage.removeItem("gameState");
-  document.getElementById("continue-btn").disabled = true;
-  backToMenu();
+function comingSoon() {
+  alert("2D gameplay coming soon.");
+}
+
+function resetSettings() {
+  localStorage.removeItem("settings");
+  location.reload();
 }
 
 /* ================= SETTINGS ================= */
 
 window.onload = function () {
-  const s = localStorage.getItem("gameState");
-  if (s) document.getElementById("continue-btn").disabled = false;
-
   const saved = localStorage.getItem("settings");
   if (saved) settings = JSON.parse(saved);
-  settings.volume = Number(settings.volume);
 
   document.getElementById("volume-slider").value = settings.volume;
   document.getElementById("volume-value").innerText = settings.volume;
   document.getElementById("music-toggle").checked = settings.musicOn;
-  document.getElementById("text-speed").value = settings.textSpeed;
   document.getElementById("reduce-motion").checked = settings.reduceMotion;
 
   playMenuMusic();
@@ -337,7 +183,8 @@ document.getElementById("music-toggle").onchange = function () {
   this.checked ? playMenuMusic() : stopMenuMusic();
 };
 
-/* FULLSCREEN FIX */
+/* ================= FULLSCREEN ================= */
+
 const fs = document.getElementById("fullscreen-toggle");
 fs.onchange = function () {
   this.checked ? document.documentElement.requestFullscreen() : document.exitFullscreen();
@@ -346,30 +193,20 @@ document.addEventListener("fullscreenchange", () => {
   fs.checked = !!document.fullscreenElement;
 });
 
-/* ================= GAME ================= */
+/* ================= AUDIO UNLOCK ================= */
 
-function sendChoice(choice) {
-  gameState.choices.push(choice);
-  localStorage.setItem("gameState", JSON.stringify(gameState));
+document.addEventListener("click", function unlock() {
+  initAudio();
+  playMenuMusic();
+  document.removeEventListener("click", unlock);
+});
 
-  const story = document.getElementById("story");
-  story.style.opacity = 0;
-
-  fetch("/scene/1", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ choice })
-  })
-  .then(r=>r.json())
-  .then(d=>{
-    setTimeout(()=>{
-      typeWriterText(story, d.result);
-      story.style.opacity = 1;
-    }, 400);
-  });
-}
+document.addEventListener("click", e => {
+  if (e.target.tagName === "BUTTON") playClickSound();
+});
 </script>
 
 </body>
 </html>
+
 
