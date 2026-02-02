@@ -1,6 +1,7 @@
 import { keys } from "../engine/input.js";
 import { TILE_SIZE, TILE_TYPES } from "../utils/constants.js";
 import { townSquareMap } from "../scenes/TownSquare.js";
+import { getGamepadAxis } from "../engine/input.js";
 
 
 export const player = {
@@ -35,15 +36,18 @@ function isWallAt(x, y) {
 
 
 export function updatePlayer(delta, canvas) {
+  const pad = getGamepadAxis();
+
   let nextX = player.x;
   let nextY = player.y;
 
   const move = player.speed * delta;
 
-  if (keys["w"] || keys["ArrowUp"]) nextY -= move;
-  if (keys["s"] || keys["ArrowDown"]) nextY += move;
-  if (keys["a"] || keys["ArrowLeft"]) nextX -= move;
-  if (keys["d"] || keys["ArrowRight"]) nextX += move;
+if (keys["w"] || keys["ArrowUp"]) nextY -= move;
+if (keys["s"] || keys["ArrowDown"]) nextY += move;
+if (keys["a"] || keys["ArrowLeft"]) nextX -= move;
+if (keys["d"] || keys["ArrowRight"]) nextX += move;
+
 
   // --- X axis collision ---
   if (
