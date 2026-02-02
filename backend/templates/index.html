@@ -12,13 +12,23 @@
     <div class="intro-content">
       <h1 class="title">The Gate</h1>
       <div class="menu">
-        <button onclick="comingSoon()">New Game</button>
+        <button onclick="startGame()">New Game</button>
         <button id="continue-btn" disabled>Continue</button>
         <button onclick="openSettings()">Settings</button>
         <button onclick="openCredits()">Credits</button>
       </div>
     </div>
   </div>
+<!--GAME SCREEN -->
+ <div id="game-screen" class="screen">
+  <div id="game-wrapper">
+    <div id="scene-box">
+      <canvas id="game-canvas" width="800" height="450"></canvas>
+    </div>
+  </div>
+</div>
+
+
 
   <!-- CREDITS -->
   <div id="credits-screen" class="screen">
@@ -63,150 +73,6 @@
       </div>
     </div>
   </div>
-
-<script>
-/* ================= GLOBAL SETTINGS ================= */
-
-let settings = {
-  volume: 100,
-  musicOn: true,
-  reduceMotion: false
-};
-
-/* ================= AUDIO ================= */
-
-let audioCtx = null;
-let clickBuffer = null;
-let menuMusicBuffer = null;
-let menuMusicSource = null;
-
-function initAudio() {
-  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-  if (!clickBuffer)
-    fetch("/static/sounds/click.mp3")
-      .then(r => r.arrayBuffer())
-      .then(b => audioCtx.decodeAudioData(b))
-      .then(buf => clickBuffer = buf);
-
-  if (!menuMusicBuffer)
-    fetch("/static/sounds/menu.mp3")
-      .then(r => r.arrayBuffer())
-      .then(b => audioCtx.decodeAudioData(b))
-      .then(buf => menuMusicBuffer = buf);
-}
-
-function playClickSound() {
-  if (!settings.musicOn || !clickBuffer || !audioCtx) return;
-  const src = audioCtx.createBufferSource();
-  const gain = audioCtx.createGain();
-  gain.gain.value = settings.volume / 100;
-  src.buffer = clickBuffer;
-  src.connect(gain);
-  gain.connect(audioCtx.destination);
-  src.start();
-}
-
-function playMenuMusic() {
-  if (!settings.musicOn || !menuMusicBuffer || menuMusicSource || !audioCtx) return;
-  const src = audioCtx.createBufferSource();
-  const gain = audioCtx.createGain();
-  gain.gain.value = (settings.volume / 100) * 0.35;
-  src.buffer = menuMusicBuffer;
-  src.loop = true;
-  src.connect(gain);
-  gain.connect(audioCtx.destination);
-  src.start();
-  menuMusicSource = src;
-}
-
-function stopMenuMusic() {
-  if (menuMusicSource) {
-    menuMusicSource.stop();
-    menuMusicSource = null;
-  }
-}
-
-/* ================= UI ================= */
-
-function hideAllScreens() {
-  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
-}
-
-function openSettings() {
-  hideAllScreens();
-  document.getElementById("settings-screen").classList.add("active");
-}
-
-function openCredits() {
-  hideAllScreens();
-  document.getElementById("credits-screen").classList.add("active");
-}
-
-function backToMenu() {
-  hideAllScreens();
-  document.getElementById("intro-screen").classList.add("active");
-}
-
-function comingSoon() {
-  alert("2D gameplay coming soon.");
-}
-
-function resetSettings() {
-  localStorage.removeItem("settings");
-  location.reload();
-}
-
-/* ================= SETTINGS ================= */
-
-window.onload = function () {
-  const saved = localStorage.getItem("settings");
-  if (saved) settings = JSON.parse(saved);
-
-  document.getElementById("volume-slider").value = settings.volume;
-  document.getElementById("volume-value").innerText = settings.volume;
-  document.getElementById("music-toggle").checked = settings.musicOn;
-  document.getElementById("reduce-motion").checked = settings.reduceMotion;
-
-  playMenuMusic();
-};
-
-document.getElementById("volume-slider").oninput = function () {
-  settings.volume = Number(this.value);
-  document.getElementById("volume-value").innerText = settings.volume;
-  localStorage.setItem("settings", JSON.stringify(settings));
-};
-
-document.getElementById("music-toggle").onchange = function () {
-  settings.musicOn = this.checked;
-  localStorage.setItem("settings", JSON.stringify(settings));
-  this.checked ? playMenuMusic() : stopMenuMusic();
-};
-
-/* ================= FULLSCREEN ================= */
-
-const fs = document.getElementById("fullscreen-toggle");
-fs.onchange = function () {
-  this.checked ? document.documentElement.requestFullscreen() : document.exitFullscreen();
-};
-document.addEventListener("fullscreenchange", () => {
-  fs.checked = !!document.fullscreenElement;
-});
-
-/* ================= AUDIO UNLOCK ================= */
-
-document.addEventListener("click", function unlock() {
-  initAudio();
-  playMenuMusic();
-  document.removeEventListener("click", unlock);
-});
-
-document.addEventListener("click", e => {
-  if (e.target.tagName === "BUTTON") playClickSound();
-});
-</script>
+<script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script>
 
 </body>
-</html>
-
-
