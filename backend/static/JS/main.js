@@ -9,7 +9,8 @@ import {
   playClickSound
 } from "./engine/audio.js";
 
-// Make functions available to HTML
+// ===== EXPOSE MENU FUNCTIONS TO HTML =====
+
 window.startGame = function () {
   stopMenuMusic();
   showScreen("game-screen");
@@ -34,30 +35,34 @@ window.resetSettings = function () {
   location.reload();
 };
 
+// ===== WAIT FOR DOM =====
+document.addEventListener("DOMContentLoaded", () => {
 
-// Audio unlock
-document.addEventListener("click", function unlock() {
-  initAudio();
-  playMenuMusic();
-  document.removeEventListener("click", unlock);
-});
-
-document.addEventListener("click", e => {
-  if (e.target.tagName === "BUTTON") playClickSound();
-});
-// Fullscreen toggle
-const fsToggle = document.getElementById("fullscreen-toggle");
-
-if (fsToggle) {
-  fsToggle.addEventListener("change", () => {
-    if (fsToggle.checked) {
-      document.documentElement.requestFullscreen();
-    } else {
-      document.exitFullscreen();
-    }
+  // Audio unlock
+  document.addEventListener("click", function unlock() {
+    initAudio();
+    playMenuMusic();
+    document.removeEventListener("click", unlock);
   });
 
-  document.addEventListener("fullscreenchange", () => {
-    fsToggle.checked = !!document.fullscreenElement;
+  document.addEventListener("click", e => {
+    if (e.target.tagName === "BUTTON") playClickSound();
   });
-}
+
+  // Fullscreen toggle
+  const fsToggle = document.getElementById("fullscreen-toggle");
+
+  if (fsToggle) {
+    fsToggle.addEventListener("change", () => {
+      if (fsToggle.checked) {
+        document.documentElement.requestFullscreen();
+      } else {
+        document.exitFullscreen();
+      }
+    });
+
+    document.addEventListener("fullscreenchange", () => {
+      fsToggle.checked = !!document.fullscreenElement;
+    });
+  }
+});

@@ -1,65 +1,139 @@
 let canvas;
 let ctx;
 let lastTime = 0;
-import { initPlayer, updatePlayer, drawPlayer } from "../entities/player.js";
-import { TILE_SIZE, TILE_TYPES } from "../utils/constants.js";
-import { townSquareMap } from "../scenes/TownSquare.js";
 
+let currentMap = null;
 
+const TILE_SIZE = 16;
+const SCALE = 3;
 
+// ================= TILESET =================
 
-export function initGame() {
+const tileset = new Image();
+tileset.src = "/static/images/tiles/town_tiles.png";
+tileset.onload = () => console.log("✅ Tileset loaded");
+
+// ================= PLAYER =================
+
+const player = {
+  x: 6,
+  y: 6,
+  speed: 0.1
+};
+
+const keys = {};
+
+window.addEventListener("keydown", e => {
+  console.log("KEY DOWN:", e.key);
+  keys[e.key] = true;
+});
+
+window.addEventListener("keyup", e => {
+  keys[e.key] = false;
+});
+
+// ================= INIT =================
+
+export async function initGame() {
   canvas = document.getElementById("game-canvas");
   ctx = canvas.getContext("2d");
+  ctx.imageSmoothingEnabled = false;
 
-  initPlayer(canvas);
+  // 🔴 CRITICAL FIX: make canvas focusable + focus it
+  canvas.setAttribute("tabindex", "0");
+  canvas.focus();
 
-  lastTime = 0;
+  await loadMap("/static/maps/town_prototype.json");
+
+  canvas.width = currentMap.width * TILE_SIZE * SCALE;
+  canvas.height = currentMap.height * TILE_SIZE * SCALE;
+
   requestAnimationFrame(gameLoop);
 }
 
+// ================= LOOP =================
 
 function gameLoop(timestamp) {
   const delta = timestamp - lastTime;
   lastTime = timestamp;
 
-  update(delta);
+  update();
   draw();
 
   requestAnimationFrame(gameLoop);
 }
 
-function update(delta) {
-  updatePlayer(delta, canvas);
+// ================= UPDATE =================
+
+function update() {
+  if (keys["ArrowUp"]) player.y -= player.speed;
+  if (keys["ArrowDown"]) player.y += player.speed;
+  if (keys["ArrowLeft"]) player.x -= player.speed;
+  if (keys["ArrowRight"]) player.x += player.speed;
+
+  console.log("PLAYER POS:", player.x, player.y);
 }
 
-
-function drawMap(ctx) {
-  for (let y = 0; y < townSquareMap.length; y++) {
-    for (let x = 0; x < townSquareMap[y].length; x++) {
-      const tile = townSquareMap[y][x];
-
-      if (tile === TILE_TYPES.FLOOR) {
-        ctx.fillStyle = "#111";
-      } else if (tile === TILE_TYPES.WALL) {
-        ctx.fillStyle = "#222";
-      }
-
-      ctx.fillRect(
-        x * TILE_SIZE,
-        y * TILE_SIZE,
-        TILE_SIZE,
-        TILE_SIZE
-      );
-    }
-  }
-}
+// ================= DRAW =================
 
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  drawMap(ctx);
-  drawPlayer(ctx);
+  if (!currentMap || !tileset.complete) return;
+
+  drawAllTileLayers();
+  drawPlayer();
 }
 
+// ================= MAP DRAW =================
 
+function drawAllTileLayers() {
+  const tilesPerRow = tileset.width / TILE_SIZE;
+
+  currentMap.layers.forEach(layer => {
+    if (layer.type !== "tilelayer") return;
+    if (layer.name === "Collision") return;
+
+    layer.data.forEach((tileId, index) => {
+      if (tileId === 0) return;
+
+      const tileIndex = tileId - 1;
+
+      const sx = (tileIndex % tilesPerRow) * TILE_SIZE;
+      const sy = Math.floor(tileIndex / tilesPerRow) * TILE_SIZE;
+
+      const dx = (index % layer.width) * TILE_SIZE * SCALE;
+      const dy = Math.floor(index / layer.width) * TILE_SIZE * SCALE;
+
+      ctx.drawImage(
+        tileset,
+        sx, sy, TILE_SIZE, TILE_SIZE,
+        dx, dy,
+        TILE_SIZE * SCALE,
+        TILE_SIZE * SCALE
+      );
+    });
+  });
+}
+
+// ================= PLAYER DRAW =================
+
+function drawPlayer() {
+  ctx.fillStyle = "#e50914";
+  ctx.fillRect(
+    player.x * TILE_SIZE * SCALE,
+    player.y * TILE_SIZE * SCALE,
+    TILE_SIZE * SCALE,
+    TILE_SIZE * SCALE
+  );
+}
+
+// ================= MAP LOAD =================
+
+async function loadMap(path) {
+  const response = await fetch(path);
+  const mapData = await response.json();
+
+  console.log("✅ MAP LOADED", mapData);
+  currentMap = mapData;
+}
